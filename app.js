@@ -28,7 +28,10 @@ assistant.message(
     } else {
       console.log(response);
       context=response.context
-    
+        if(response.context.person!=null && response.context.time!=null && response.context.date!=null && response.context.number!=null)
+        {
+            console.log('hooray got all the values');
+        }
     }
   }
 );
