@@ -15,49 +15,100 @@ var assistant = new AssistantV1({
   version: '2018-02-16'
 });
 
-var user= mongoose.model('customers',{Name:String,
+var user= mongoose.model('users',{Name:String,
                             Phone_number: String,
                             Date: String,
                             Time: String});
 
-new user ({"Name": "Sam Smith", "Phone_number": "3222333333", "Date": "11/23/2018","Time": "9.30"}).save(function( err,customers){
-
-})
 app.get('/test',(req,res)=>{
-    user.find({"Date": "11/23/2018","Time": "9.30"},function(err,customers){
+    user.find({},function(err,customers){
         res.send(customers)
     })
 })
 
 var context ={}
-
+function isEmpty(obj) {
+    for(var key in obj) {
+        if(obj.hasOwnProperty(key))
+            return false;
+    }
+    return true;
+}
 app.post('/message',(req,res)=>{
 
     var user_message=req.body.message 
     
-assistant.message(
-  {
-    workspace_id: '7b33d520-7748-4a48-9889-ca8cff34482f',
-    input: { text: user_message},
-    context: context
-  },
-  function(err, response) {
-    if (err) {
-      console.error(err);
-    } else {
-      console.log(response);
-      context=response.context
-        if(response.context.person!=null && response.context.time!=null && response.context.date!=null && response.context.number!=null)
-        {
-            console.log('hooray got all the values');
-        }
-    }
-  }
-);
+            assistant.message(
+            {
+                workspace_id: '7b33d520-7748-4a48-9889-ca8cff34482f',
+                input: { text: user_message},
+                context: context
+            },
+            function(err, response) {
+                if (err) {
+                console.error(err);
+                } else {
+                console.log(response);
+                context=response.context
+                   /* if(response.context.person!=null && response.context.time!=null && response.context.date!=null){
+                        user.find({"Date": response.context.date,"Time": response.context.time},function(err,users){
+                            if(isEmpty(users)){
+                                callWatsonInternally("YES")
+                                new user ({"Name": response.context.person, "Date": response.context.date,"Time": response.context.time}).save(function( err,users){
+                                    console.log('sucessfully updated the database')
+                                })
+                            }
+                            else{
+                                callWatsonInternally("NO")
+                            }
+                        })
+                    }*/
+                    if(response.context.person!=null && response.context.time!=null && response.context.date!=null && response.context.number!=null && (response.context.number)/9>1)
+                    {   
+
+                        user.find({"Date": response.context.date,"Time": response.context.time},function(err,users){
+                            if(isEmpty(users)){
+                                
+                                var numberofcustomer=response.context.number.toString();
+                                new user ({"Name": response.context.person, "Phone_number": numberofcustomer,"Date": response.context.date,"Time": response.context.time}).save(function( err,users){
+                                    console.log('sucessfully updated the database')
+                                })
+                                callWatsonInternally("YES")
+                            }
+                            else{
+                               response.context.date=null
+                              response.context.time=null
+                                context=response.context
+                                callWatsonInternally("NO")
+                            }
+                        })
+
+                        
+                        
+                    }
+                }
+            }
+            );
 
 res.end()
 })
 
+function callWatsonInternally(user_message){
+    assistant.message(
+        {
+            workspace_id: '7b33d520-7748-4a48-9889-ca8cff34482f',
+            input: { text: user_message},
+            context: context
+        },
+        function(err, response) {
+            if (err) {
+            console.error(err);
+            } else {
+            console.log(response);
+        }
+    }
+    );
+}
 
 app.listen(3008,()=>{
     console.log("server is listening")
