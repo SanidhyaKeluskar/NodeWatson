@@ -7,7 +7,11 @@ const app=express()
 //use(bodyParser.json())
 app.use(bodyParser.urlencoded({extended:false}))
 
-mongoose.connect('mongodb://127.0.0.1:27017/booking_db', { useNewUrlParser: true })
+mongoose.connect("mongodb://mongo:27017/test", { useNewUrlParser: true })
+        .then(()=>console.log('mongodb connected'))
+        .catch(err=>console.log(err))
+
+
 var assistant = new AssistantV1({
   username: 'apikey',
   password: 'eHZn9TIsARfnFkF-hOVmUihbjFPmoxMLCjj_QljaHv5I',
@@ -27,6 +31,7 @@ app.get('/test',(req,res)=>{
 })
 
 var context ={}
+
 function isEmpty(obj) {
     for(var key in obj) {
         if(obj.hasOwnProperty(key))
@@ -63,6 +68,9 @@ app.post('/message',(req,res)=>{
                             }
                         })
                     }*/
+                   // if(response.intents[0].intent=='help'){
+                    //    xcontext=response.context
+                   // }
                     if(response.context.person!=null && response.context.time!=null && response.context.date!=null && response.context.number!=null && (response.context.number)/9>1)
                     {   
 
@@ -76,9 +84,7 @@ app.post('/message',(req,res)=>{
                                 callWatsonInternally("YES")
                             }
                             else{
-                               response.context.date=null
-                              response.context.time=null
-                                context=response.context
+                            
                                 callWatsonInternally("NO")
                             }
                         })
@@ -94,7 +100,7 @@ res.end()
 })
 
 function callWatsonInternally(user_message){
-    assistant.message(
+     assistant.message(
         {
             workspace_id: '7b33d520-7748-4a48-9889-ca8cff34482f',
             input: { text: user_message},
@@ -109,7 +115,8 @@ function callWatsonInternally(user_message){
     }
     );
 }
+    
 
-app.listen(3008,()=>{
+app.listen(3000,()=>{
     console.log("server is listening")
 })
